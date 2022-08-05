@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8862AC3628908D5D00E38343 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8862AC3528908D5D00E38343 /* main.m */; };
+		8862AC3E28908D7C00E38343 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8862AC3D28908D7C00E38343 /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,7 @@
 /* Begin PBXFileReference section */
 		8862AC3228908D5D00E38343 /* keyboardremapper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = keyboardremapper; sourceTree = BUILT_PRODUCTS_DIR; };
 		8862AC3528908D5D00E38343 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		8862AC3D28908D7C00E38343 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8862AC3E28908D7C00E38343 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -43,6 +46,7 @@
 			children = (
 				8862AC3428908D5D00E38343 /* keyboardremapper */,
 				8862AC3328908D5D00E38343 /* Products */,
+				8862AC3C28908D7C00E38343 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -60,6 +64,14 @@
 				8862AC3528908D5D00E38343 /* main.m */,
 			);
 			path = keyboardremapper;
+			sourceTree = "<group>";
+		};
+		8862AC3C28908D7C00E38343 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8862AC3D28908D7C00E38343 /* Cocoa.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -238,6 +250,7 @@
 		8862AC3A28908D5D00E38343 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -246,6 +259,7 @@
 		8862AC3B28908D5D00E38343 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
