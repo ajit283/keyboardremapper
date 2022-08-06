@@ -51,14 +51,14 @@ struct key {
 };
 int valueinarray(int64_t val)
 {
-    if(val == 38 || val == 40 || val == 37 || val==34 || val==kVK_ANSI_W || val==kVK_ANSI_R){
+    if(val == 38 || val == 40 || val == 37 || val==34 || val==kVK_ANSI_W || val==kVK_ANSI_R || val==kVK_ANSI_E || val==kVK_ANSI_S|| val==kVK_ANSI_D|| val==kVK_ANSI_F|| val==kVK_ANSI_X|| val==kVK_ANSI_C|| val==kVK_ANSI_V || val==kVK_ANSI_T|| val==kVK_ANSI_G || kVK_Return){
         NSLog(@"true");
         return 1;
     }
-    return 0;
+    return 1;
 }
 
-int getLayerKey(int64_t currentKey){
+int64_t getLayerKey(int64_t currentKey){
     if(currentKey == 38){
         return 123;
   } else if(currentKey == 40){
@@ -67,12 +67,8 @@ int getLayerKey(int64_t currentKey){
       return 124;
     } else if(currentKey == 34){
         return 126;
-    } else if(currentKey == kVK_ANSI_W){
-        return kVK_F18;
-    } else if(currentKey == kVK_ANSI_R){
-        return kVK_F19;
     }
-    return 0x00;
+    return currentKey;
 }
 
 
@@ -87,9 +83,10 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
   //0x09 is the virtual keycode for "v"
     CGEventRef pressspace = CGEventCreateKeyboardEvent(NULL, 0x31, true);
     CGEventRef releasespace = CGEventCreateKeyboardEvent(NULL, 0x31, false);
+  
    
-    int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
-    if (valueinarray(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode)) == 1 && type == kCGEventKeyDown) {
+    //int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+    if (valueinarray(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode)) == 1 && type == kCGEventKeyDown && lock==0) {
         currentKey = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
         NSLog(@"currentKey %d", currentKey);
         spc = false;
@@ -118,6 +115,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
       CFRelease(releasecurrentKey);
       CFRelease(presslayer);
       CFRelease(releaselayer);
+     
       NSLog(@"exit");
       return NULL;
   } else if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == 0x31 && type == kCGEventKeyUp && lock == 0) {
@@ -140,7 +138,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
                        CFRelease(presscurrentKey);
                        CFRelease(releasecurrentKey);
                        CFRelease(presslayer);
-                       CFRelease(releaselayer);
+                         CFRelease(releaselayer);
+     
               lock = 0;
                    return NULL;
               
@@ -153,7 +152,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
           CFRelease(presscurrentKey);
           CFRelease(releasecurrentKey);
           CFRelease(presslayer);
-          CFRelease(releaselayer);
+            CFRelease(releaselayer);
+     
       return NULL;
   }
     
@@ -165,8 +165,21 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
       
           NSLog(@"second order left arrow");
           lock= 1;
-          CGEventTapPostEvent(proxy, presslayer);
-          CGEventTapPostEvent(proxy, releaselayer);
+    //  CGEventTapPostEvent(proxy, presscommand);
+    //        CGEventTapPostEvent(proxy, presscontrol);
+    //        CGEventTapPostEvent(proxy, pressoption);
+          //  CGEventTapPostEvent(proxy, pressshift);
+     // [NSThread sleepForTimeInterval:0.01f];
+      if(currentKey != 38 && currentKey != 40 && currentKey != 37 && currentKey != 34){
+      CGEventSetFlags(presslayer, (kCGEventFlagMaskShift | kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand | kCGEventFlagMaskControl));
+      }
+           CGEventTapPostEvent(proxy, presslayer);
+            CGEventTapPostEvent(proxy, releaselayer);
+         //   CGEventTapPostEvent(proxy, releaseshift);
+    
+   //         CGEventTapPostEvent(proxy, releaseoption);
+   //         CGEventTapPostEvent(proxy, releasecontrol);
+   //         CGEventTapPostEvent(proxy, releasecommand);
       
       NSLog(@"got here");
      /* CFRelease(pressspace);
@@ -174,7 +187,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
           CFRelease(presscurrentKey);
           CFRelease(releasecurrentKey);
           CFRelease(presslayer);
-          CFRelease(releaselayer);*/
+            CFRelease(releaselayer);
+     */
       //return NULL;
       
       
@@ -183,15 +197,32 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
   
   
    else if((((double)CFAbsoluteTimeGetCurrent() - (double) spacedown) > 0.2) && space && lock == 0 && CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey){
-                  CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, getLayerKey(currentKey));
+                 // CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, getLayerKey(currentKey));
+       lock = 1;
+  //     CGEventTapPostEvent(proxy, presscommand);
+  //     CGEventTapPostEvent(proxy, presscontrol);
+  //     CGEventTapPostEvent(proxy, pressoption);
+       if(currentKey != 38 && currentKey != 40 && currentKey != 37 && currentKey != 34){
+           CGEventSetFlags(presslayer, (kCGEventFlagMaskShift | kCGEventFlagMaskAlternate | kCGEventFlagMaskCommand | kCGEventFlagMaskControl));
+           }
+                CGEventTapPostEvent(proxy, presslayer);
+                 CGEventTapPostEvent(proxy, releaselayer);
+  //     CGEventTapPostEvent(proxy, releaseoption);
+  //     CGEventTapPostEvent(proxy, releasecontrol);
+   //    CGEventTapPostEvent(proxy, releasecommand);
+       
+       
+       
+       
                   NSLog(@"space down, left arrow");
                   CFRelease(pressspace);
                       CFRelease(releasespace);
                       CFRelease(presscurrentKey);
                       CFRelease(releasecurrentKey);
                       CFRelease(presslayer);
-                      CFRelease(releaselayer);
-                  return event;
+                        CFRelease(releaselayer);
+     
+                  return NULL;
               }
     
 //   else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyUp && lock == 0 && !space && spc){
@@ -207,7 +238,15 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 //                       CFRelease(presscurrentKey);
 //                       CFRelease(releasecurrentKey);
 //                       CFRelease(presslayer);
-//                       CFRelease(releaselayer);
+//                         CFRelease(releaselayer);
+//      CFRelease(presscommand);
+//      CFRelease(releasecommand);
+//      CFRelease(presscontrol);
+//      CFRelease(releasecontrol);
+//      CFRelease(pressoption);
+//      CFRelease(releaseoption);
+//      CFRelease(pressshift);
+//      CFRelease(releaseshift);
 //       spc = false;
 //              return NULL;
 //
@@ -235,7 +274,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
                    CFRelease(presscurrentKey);
                    CFRelease(releasecurrentKey);
                    CFRelease(presslayer);
-                   CFRelease(releaselayer);
+                     CFRelease(releaselayer);
+     
           spc = false;
           return NULL;
           
@@ -250,7 +290,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
           CFRelease(presscurrentKey);
           CFRelease(releasecurrentKey);
           CFRelease(presslayer);
-          CFRelease(releaselayer);
+            CFRelease(releaselayer);
+     
           return NULL;
       }
   else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyDown && lock == 0 && space){
@@ -262,7 +303,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
                CFRelease(presscurrentKey);
                CFRelease(releasecurrentKey);
                CFRelease(presslayer);
-               CFRelease(releaselayer);
+                 CFRelease(releaselayer);
+     
       return NULL;
          
          
@@ -280,7 +322,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         CFRelease(presscurrentKey);
         CFRelease(releasecurrentKey);
         CFRelease(presslayer);
-        CFRelease(releaselayer);
+          CFRelease(releaselayer);
+     
     return event;
 }
 
