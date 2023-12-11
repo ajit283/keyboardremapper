@@ -1,3 +1,3 @@
 # Keyboard remapper
 
-this is a proof of concept for implementing qmk-style tap-hold functionality for mac. Currently, only the **spacebar** can act as the tap-modifier and the arrow keys IJKL work, though this can be changed at the top of main.m. I just bodged this together in order to use my HHKB similarly to how I use QMK Keyboards, so if someone who actually knows Objective-C would like to improve this program, your help would be greatly appreciated..
+This program implements the spacebar tap-hold functionality from qmk natively on mac, with special consideration given to edge cases in order to prevent false taps. Modify the standard keymap by changing the `getLayerKey` function in `main.m`, then compile using XCode. Tip: use the shell script action in automator to run the program without the open terminal.

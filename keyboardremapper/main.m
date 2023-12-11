@@ -9,73 +9,38 @@
 #import <Cocoa/Cocoa.h>
 #include <Carbon/Carbon.h>
 
-double spacedown = 0;
-double spaceup = 0;
-bool space = false;
-double jdown = 0;
-double jup = 0;
-bool j = false;
+double spaceDownTime = 0;
+double spaceUpTime = 0;
+bool isSpaceDown = false;
+double currentKeyDown = 0;
+double currentKeyUp = 0;
+bool isCurrentKeyDown = false;
 double lock = 0;
-bool spc = false;
+bool spcFlag = false;
 
-/*
- kVK_ANSI_I                    = 0x22 = 34,
+const double TIMEOUT = 0.2;
 
-  kVK_ANSI_L                    = 0x25 = 37,
-  kVK_ANSI_J                    = 0x26 = 38,
+CGEventMask mask = CGEventMaskBit(kCGEventKeyUp) | CGEventMaskBit(kCGEventKeyDown);
 
-  kVK_ANSI_K                    = 0x28 = 40,
- kVK_LeftArrow                 = 0x7B = 123,
-   kVK_RightArrow                = 0x7C = 124,
-   kVK_DownArrow                 = 0x7D = 125,
-   kVK_UpArrow                   = 0x7E = 126
- kVK_F18                       = 0x4F,
- kVK_F19                       = 0x50,
- kVK_F20                       = 0x5A,
- kVK_F13                       = 0x69,
-  kVK_F16                       = 0x6A,
-  kVK_F14                       = 0x6B,
-  kVK_F10                       = 0x6D,
-  kVK_F12                       = 0x6F,
-  kVK_F15                       = 0x71,
- */
 
-int keys[] = {38, 40, 37, 34, kVK_ANSI_W, kVK_ANSI_R};
+int64_t currentKey = 0;
 
-int64_t currentKey = 69;
 
-struct key {
-    double keydown;
-    double keyup;
-    bool space;
-};
-int valueinarray(int64_t val)
-{
-    if(val == 38 || val == 40 || val == 37 || val==34 || val==kVK_ANSI_W || val==kVK_ANSI_R){
-        NSLog(@"true");
-        return 1;
+// define the keymap here (my setup: VIM arrows shifted one key to the right)
+int64_t getLayerKey(int64_t currentKey) {
+    switch(currentKey) {
+        case kVK_ANSI_J:
+            return kVK_LeftArrow;
+        case kVK_ANSI_K:
+            return kVK_DownArrow;
+        case kVK_ANSI_Semicolon:
+            return kVK_RightArrow;
+        case kVK_ANSI_L:
+            return kVK_UpArrow;
+        default:
+            return 0x00;
     }
-    return 0;
 }
-
-int getLayerKey(int64_t currentKey){
-    if(currentKey == 38){
-        return 123;
-  } else if(currentKey == 40){
-        return 125;
-    } else if(currentKey == 37){
-      return 124;
-    } else if(currentKey == 34){
-        return 126;
-    } else if(currentKey == kVK_ANSI_W){
-        return kVK_F18;
-    } else if(currentKey == kVK_ANSI_R){
-        return kVK_F19;
-    }
-    return 0x00;
-}
-
-
 
 
 
@@ -83,240 +48,164 @@ int getLayerKey(int64_t currentKey){
 
 
 CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
-  //0x0b is the virtual keycode for "b"
-  //0x09 is the virtual keycode for "v"
-    CGEventRef pressspace = CGEventCreateKeyboardEvent(NULL, 0x31, true);
-    CGEventRef releasespace = CGEventCreateKeyboardEvent(NULL, 0x31, false);
-   
-    int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
-    if (valueinarray(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode)) == 1 && type == kCGEventKeyDown) {
-        currentKey = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
-        NSLog(@"currentKey %d", currentKey);
-        spc = false;
-            NSLog(@"j down");
-            //space = true;
-            jdown = (double) CFAbsoluteTimeGetCurrent();
-        
     
+   
+    
+    int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+    
+    if (getLayerKey(keycode) != 0x00 && type == kCGEventKeyDown) {
+        currentKey = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+        spcFlag = false;
+        NSLog(@"isCurrentKeyDown true");
+        currentKeyDown = CFAbsoluteTimeGetCurrent();
     }
     
-    CGEventRef presscurrentKey = CGEventCreateKeyboardEvent(NULL, currentKey, true);
-                  CGEventRef releasecurrentKey = CGEventCreateKeyboardEvent(NULL, currentKey, false);
-       CGEventRef presslayer = CGEventCreateKeyboardEvent(NULL, getLayerKey(currentKey), true);
-            CGEventRef releaselayer = CGEventCreateKeyboardEvent(NULL, getLayerKey(currentKey), false);
     
-  if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == 0x31 && type == kCGEventKeyDown && lock == 0) {
-      if(space == false){
-          NSLog(@"space down %f", lock);
-          space = true;
-          spacedown = (double) CFAbsoluteTimeGetCurrent();
-      }
-      //NSLog(@"spacedown variable: ", type);k
-      CFRelease(pressspace);
-      CFRelease(releasespace);
-      CFRelease(presscurrentKey);
-      CFRelease(releasecurrentKey);
-      CFRelease(presslayer);
-      CFRelease(releaselayer);
-      NSLog(@"exit");
-      return NULL;
-  } else if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == 0x31 && type == kCGEventKeyUp && lock == 0) {
-      if(space == true){
-          NSLog(@"space up %f", lock);
-          space = false;
-          spc=true;
-          spaceup = (double)CFAbsoluteTimeGetCurrent();
-          if((spacedown - spaceup < 0.2) && (jdown - spacedown < 0) && (jup - spacedown < 0) ){
-              NSLog(@"normal space sent");
-              
-             
-             lock = 1;
-              NSLog(@"lock: %f", lock);
-              CGEventTapPostEvent(proxy, pressspace);
-              CGEventTapPostEvent(proxy, releasespace);
-              
-              CFRelease(pressspace);
-                       CFRelease(releasespace);
-                       CFRelease(presscurrentKey);
-                       CFRelease(releasecurrentKey);
-                       CFRelease(presslayer);
-                       CFRelease(releaselayer);
-              lock = 0;
-                   return NULL;
-              
-                   
-          }
-      }
-      //NSLog(@"spacedown variable: ", type);
-      CFRelease(pressspace);
-          CFRelease(releasespace);
-          CFRelease(presscurrentKey);
-          CFRelease(releasecurrentKey);
-          CFRelease(presslayer);
-          CFRelease(releaselayer);
-      return NULL;
-  }
+   
     
-
-  
-  else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyUp && lock == 0 && space && (((double)jdown - (double) spacedown) < 0.2)){
-     
-      
-      
-          NSLog(@"second order left arrow");
-          lock= 1;
-          CGEventTapPostEvent(proxy, presslayer);
-          CGEventTapPostEvent(proxy, releaselayer);
-      
-      NSLog(@"got here");
-     /* CFRelease(pressspace);
-          CFRelease(releasespace);
-          CFRelease(presscurrentKey);
-          CFRelease(releasecurrentKey);
-          CFRelease(presslayer);
-          CFRelease(releaselayer);*/
-      //return NULL;
-      
-      
-      
-  }
-  
-  
-   else if((((double)CFAbsoluteTimeGetCurrent() - (double) spacedown) > 0.2) && space && lock == 0 && CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey){
-                  CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, getLayerKey(currentKey));
-                  NSLog(@"space down, left arrow");
-                  CFRelease(pressspace);
-                      CFRelease(releasespace);
-                      CFRelease(presscurrentKey);
-                      CFRelease(releasecurrentKey);
-                      CFRelease(presslayer);
-                      CFRelease(releaselayer);
-                  return event;
-              }
+    if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == 0x31 && type == kCGEventKeyDown && lock == 0) {
+        if(isSpaceDown == false){
+            NSLog(@"space down %f", lock);
+            isSpaceDown = true;
+            spaceDownTime = CFAbsoluteTimeGetCurrent();
+        }
     
-//   else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyUp && lock == 0 && !space && spc){
-//
-//
-//
-//
-//         NSLog(@"new2");
-//       CGEventTapPostEvent(proxy, presscurrentKey);
-//               CGEventTapPostEvent(proxy, releasecurrentKey);
-//              CFRelease(pressspace);
-//                       CFRelease(releasespace);
-//                       CFRelease(presscurrentKey);
-//                       CFRelease(releasecurrentKey);
-//                       CFRelease(presslayer);
-//                       CFRelease(releaselayer);
-//       spc = false;
-//              return NULL;
-//
-//
-//
-//        }
-    
-  else if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyUp && lock == 0 && !space && spc) {
-          
-          
-          long timedifference = ((double)CFAbsoluteTimeGetCurrent() -  spacedown);
-          NSLog(@"diff: %ld", timedifference);
-          //NSLog(@"spacedown variable: ", type);
-      if(!space){
-          NSLog(@"space not down, %d",currentKey);
-     
-      //lock = 1;
-          CGEventTapPostEvent(proxy, pressspace);
-          CGEventTapPostEvent(proxy, releasespace);
-     CGEventTapPostEvent(proxy, presscurrentKey);
-        CGEventTapPostEvent(proxy, releasecurrentKey);
-          
-          CFRelease(pressspace);
-                   CFRelease(releasespace);
-                   CFRelease(presscurrentKey);
-                   CFRelease(releasecurrentKey);
-                   CFRelease(presslayer);
-                   CFRelease(releaselayer);
-          spc = false;
-          return NULL;
-          
-          
-          
-          
-          
-          
-      }
-      CFRelease(pressspace);
-          CFRelease(releasespace);
-          CFRelease(presscurrentKey);
-          CFRelease(releasecurrentKey);
-          CFRelease(presslayer);
-          CFRelease(releaselayer);
-          return NULL;
-      }
-  else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyDown && lock == 0 && space){
+        NSLog(@"exit");
+        return NULL;
         
-         
-      NSLog(@"new");
-      CFRelease(pressspace);
-               CFRelease(releasespace);
-               CFRelease(presscurrentKey);
-               CFRelease(releasecurrentKey);
-               CFRelease(presslayer);
-               CFRelease(releaselayer);
-      return NULL;
-         
-         
-         
-     }
-  
-  
-  
-  
-    
-    lock = 0;
-    NSLog(@"exit, lock: %f", lock);
-    CFRelease(pressspace);
-        CFRelease(releasespace);
-        CFRelease(presscurrentKey);
-        CFRelease(releasecurrentKey);
+    } 
+    else if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == 0x31 && type == kCGEventKeyUp && lock == 0) {
+        if(isSpaceDown == true){
+            NSLog(@"space up %f", lock);
+            isSpaceDown = false;
+            spcFlag = true;
+            spaceUpTime = CFAbsoluteTimeGetCurrent();
+            if((spaceDownTime - spaceUpTime < TIMEOUT) && (currentKeyDown - spaceDownTime < 0) && (currentKeyUp - spaceUpTime < 0) ){
+                NSLog(@"normal space emitted");
+                
+                
+                lock = 1;
+                CGEventRef pressspace = CGEventCreateKeyboardEvent(NULL, 0x31, true);
+                CGEventRef releasespace = CGEventCreateKeyboardEvent(NULL, 0x31, false);
+                
+                CGEventTapPostEvent(proxy, pressspace);
+                CGEventTapPostEvent(proxy, releasespace);
+                
+                CFRelease(pressspace);
+                CFRelease(releasespace);
+                
+                lock = 0;
+                
+                return NULL;
+                
+                
+            }
+        }
+        
+        return NULL;
+    }
+    else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyUp && lock == 0 && isSpaceDown && ((currentKeyDown - spaceDownTime) < TIMEOUT)){
+        
+        
+        
+        NSLog(@"layerKey emitted (second order)");
+        lock = 1;
+        CGEventRef presslayer = CGEventCreateKeyboardEvent(NULL, getLayerKey(currentKey), true);
+        CGEventRef releaselayer = CGEventCreateKeyboardEvent(NULL, getLayerKey(currentKey), false);
+        CGEventTapPostEvent(proxy, presslayer);
+        CGEventTapPostEvent(proxy, releaselayer);
         CFRelease(presslayer);
         CFRelease(releaselayer);
+        
+        
+        
+        
+    }
+    
+    
+    else if(((CFAbsoluteTimeGetCurrent() - spaceDownTime) > TIMEOUT) && isSpaceDown && lock == 0 && CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey){
+        CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, getLayerKey(currentKey));
+        NSLog(@"space down, layerKey emitted");
+        return event;
+    }
+    
+    
+    else if (CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyUp && lock == 0 && !isSpaceDown && spcFlag) {
+        
+        
+        long timedifference = (CFAbsoluteTimeGetCurrent() -  spaceDownTime);
+        NSLog(@"diff: %ld", timedifference);
+        
+        if(!isSpaceDown){
+            
+            
+            CGEventRef pressspace = CGEventCreateKeyboardEvent(NULL, 0x31, true);
+            CGEventRef releasespace = CGEventCreateKeyboardEvent(NULL, 0x31, false);
+            CGEventRef presscurrentKey = CGEventCreateKeyboardEvent(NULL, currentKey, true);
+            CGEventRef releasecurrentKey = CGEventCreateKeyboardEvent(NULL, currentKey, false);
+            
+            CGEventTapPostEvent(proxy, pressspace);
+            CGEventTapPostEvent(proxy, releasespace);
+            CGEventTapPostEvent(proxy, presscurrentKey);
+            CGEventTapPostEvent(proxy, releasecurrentKey);
+            
+            CFRelease(pressspace);
+            CFRelease(releasespace);
+            CFRelease(presscurrentKey);
+            CFRelease(releasecurrentKey);
+         
+            spcFlag = false;
+            return NULL;
+            
+            
+            
+            
+            
+            
+        }
+        return NULL;
+    }
+    else if(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode) == currentKey && type == kCGEventKeyDown && lock == 0 && isSpaceDown){
+        
+        NSLog(@"new");
+        return NULL;
+        
+    }
+    
+
+    lock = 0;
+    NSLog(@"exit, lock: %f", lock);
     return event;
 }
 
 
 
 
-CGEventMask mask = CGEventMaskBit(kCGEventKeyUp) |
-                   CGEventMaskBit(kCGEventKeyDown);
+
 
 int main(int argc, char *argv[]) {
     @autoreleasepool {
+        CFRunLoopSourceRef runLoopSource;
+        
+        CFMachPortRef eventTap = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, mask, myCGEventCallback, NULL);
         
         
+        if (!eventTap) {
+            NSLog(@"Couldn't create event tap");
+            exit(1);
+        }
         
-    
-  CFRunLoopSourceRef runLoopSource;
-
-  CFMachPortRef eventTap = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, mask, myCGEventCallback, NULL);
-   
-    
-  if (!eventTap) {
-    NSLog(@"Couldn't create event tap!!");
-    exit(1);
-  }
-
-  runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
-
-  CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
-
-  CGEventTapEnable(eventTap, true);
-
-  CFRunLoopRun();
-
-  CFRelease(eventTap);
-  CFRelease(runLoopSource);
+        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
+        
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
+        
+        CGEventTapEnable(eventTap, true);
+        
+        CFRunLoopRun();
+        
+        CFRelease(eventTap);
+        CFRelease(runLoopSource);
     }
-
-  exit(0);
+    
+    exit(0);
 }
